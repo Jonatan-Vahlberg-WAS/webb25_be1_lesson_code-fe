@@ -10,6 +10,8 @@ export async function getSongs() {
     }
 }
 
-export function createSong({ title, artist }) {
-  return apiFetch('/api/songs', { method: 'POST' }, { title, artist });
+export function createSong({ title, artist, albumId = null }) {
+  const body = { title, artist };
+  if (albumId) body.album = albumId;
+  return apiFetch("/api/songs", { method: "POST" }, body);
 }

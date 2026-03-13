@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { getArtists } from "../../api/artists";
+import { getAlbumsByArtist } from "../../api/albums";
 import { createSong } from "../../api/songs";
 
 export default function CreateSongForm({ onCreated }) {
     const [title, setTitle] = useState("");
     const [artist, setArtist] = useState("");
+    const [albumId, setAlbumId] = useState("");
 
     const [artists, setArtists] = useState([]);
+    const [albums, setAlbums] = useState([]);
     const [loadingArtists, setLoadingArtists] = useState(true);
 
     const [submitting, setSubmitting] = useState(false);
@@ -32,6 +35,23 @@ export default function CreateSongForm({ onCreated }) {
         loadArtists();
     }, []);
 
+    useEffect(() => {
+        async function loadAlbums() {
+            if (!artist) return;
+
+            try {
+                const data = await getAlbumsByArtist(artist);
+                setAlbums(data);
+                setAlbumId("");
+            } catch (err) {
+                setAlbums([]);
+                setAlbumId("");
+            }
+        }
+
+        loadAlbums();
+    }, [artist]);
+
     const canSubmit = useMemo(() => {
         return title.trim().length > 0 && artist && !submitting;
     }, [title, artist, submitting]);
@@ -47,7 +67,8 @@ export default function CreateSongForm({ onCreated }) {
 
             await createSong({
                 title: title.trim(),
-                artist
+                artist,
+                albumId: albumId || null
             });
 
             setTitle("");
@@ -93,6 +114,22 @@ export default function CreateSongForm({ onCreated }) {
                             {artists.map((a) => (
                                 <option key={a._id} value={a._id}>
                                     {a.name}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+
+                    <label className="create-song-form__field">
+                        <span className="create-song-form__label">Album</span>
+                        <select
+                            className="create-song-form__select"
+                            value={albumId}
+                            onChange={(e) => setAlbumId(e.target.value)}
+                        >
+                            <option value="">Ingen (single)</option>
+                            {albums.map((al) => (
+                                <option key={al._id} value={al._id}>
+                                    {al.title}
                                 </option>
                             ))}
                         </select>
